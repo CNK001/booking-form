@@ -1,17 +1,30 @@
 <template>
   <div id="app">
     <h1>Formularz rezerwacji pobytu</h1>
-    <BookingStay :price="298" currency="PLN" locale="pl" />
+    <BookingStay
+      :price="298"
+      currency="PLN"
+      locale="pl"
+      :free-slot="freeSlot"
+      occupied=''
+    />
   </div>
 </template>
 
 <script>
 import BookingStay from "./components/BookingStay.vue";
+import dayjs from "dayjs";
 
 export default {
   name: "App",
   components: {
     BookingStay
+  },
+  
+  data: function() {
+    return {
+      freeSlot: [dayjs(), dayjs().add(1, 'week')],
+    };
   }
 };
 </script>

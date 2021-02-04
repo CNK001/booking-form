@@ -23,7 +23,7 @@
         </div>
       </fieldset>
     </form>
-    <calendar locale="en" />
+    <calendar locale="en" :free-slot="freeSlot" />
   </div>
 </template>
 
@@ -46,6 +46,7 @@ export default {
       String,
       default: "en",
     },
+    freeSlot: Array,
   },
 
   data: function() {

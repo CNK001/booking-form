@@ -38,6 +38,7 @@
 <script>
 import dayjs from "dayjs";
 const localeData = require("dayjs/plugin/localeData");
+// const isBetween = require("dayjs/plugin/isBetween");
 // const updateLocale = require('dayjs/plugin/updateLocale')
 
 const monthsList = (start, end, length = end - start) =>
@@ -65,6 +66,9 @@ export default {
     currentDate: {
       type: String,
     },
+    freeSlot: {
+      type: Array,
+    }
   },
 
   data: function() {
@@ -138,7 +142,23 @@ export default {
         }
 
       }
-    }
+    },
+
+  getDatesFromRange(startDate, endDate) {
+    let dates = [],
+    currentDate = startDate,
+      addDays = function(days) {
+        var date = new Date(this.valueOf());
+        date.setDate(date.getDate() + days);
+        return date;
+      };
+  while (currentDate <= endDate) {
+    dates.push(dayjs(currentDate).format("YYYY-MM-DD"));
+    currentDate = addDays.call(currentDate, 1);
+  }
+  return dates; 
+  }
+
   },
 
   computed: {
@@ -156,22 +176,36 @@ export default {
     weekDays: function() {
       return dayjs.weekdaysShort();
     },
+
+    freeFrom: function() {
+      return dayjs(this.freeSlot[0]).format("YYYY-MM-DD");
+    },
+
+    freeTo: function() {
+      return dayjs(this.freeSlot[1]).format("YYYY-MM-DD");
+    },
+
+    freeSlotRange: function() {
+      return this.getDatesFromRange(this.freeSlot[0], this.freeSlot[1])
+    }
   },
 
   created() {
     this.setLocale();
   },
 
-  // mounted: function() {
-  //   this.$nextTick(function() {
+  mounted: function() {
+    this.$nextTick(function() {
+      console.log(
+        this.getDatesFromRange(dayjs(this.today), dayjs(this.today).add(1, 'month') )
   //     console.log(
   //       dayjs()
   //         .startOf("month")
   //         .set("year", 2021)
   //         .format("YYYY-MM-DD")
-  //     );
-  //   });
-  // },
+      );
+    });
+  },
 };
 </script>
 
