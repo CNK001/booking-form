@@ -6,7 +6,9 @@
       <button class="btn-nav" @click="prevMonth()">
         <span class="chevron-arrow-left"></span>
       </button>
-      <div class="month-name">{{  activeMonth.name }} {{ activeMonth.date.year }}</div>
+      <div class="month-name">
+        {{ activeMonth.name }} {{ activeMonth.date.year }}
+      </div>
       <button class="btn-nav" @click="nextMonth()">
         <span class="chevron-arrow-right"></span>
       </button>
@@ -18,7 +20,11 @@
       </div>
     </div>
     <div class="days">
-      <div v-for="(dayMonthPrev, index) of activeMonth.monthBefore.daysList" :key="`${index}-before`" class="day day--before">
+      <div
+        v-for="(dayMonthPrev, index) of activeMonth.monthBefore.daysList"
+        :key="`${index}-before`"
+        class="day day--before"
+      >
         {{ dayMonthPrev }}
       </div>
       <div
@@ -26,10 +32,18 @@
         :key="index"
         class="day"
       >
-        {{ day }}
+      <span
+      :class="isFree(day, freeSlotRange)?'free':''"
+      >
+        {{ getDayFromDate(day) }}
+      </span>
       </div>
-      <div v-for="(day, index) of activeMonth.monthAfter.daysList" :key="`${index}-after`" class="day day--after">
-        {{ index + 1}}
+      <div
+        v-for="(day, index) of activeMonth.monthAfter.daysList"
+        :key="`${index}-after`"
+        class="day day--after"
+      >
+        {{ index + 1 }}
       </div>
     </div>
   </div>
@@ -68,7 +82,7 @@ export default {
     },
     freeSlot: {
       type: Array,
-    }
+    },
   },
 
   data: function() {
@@ -80,7 +94,7 @@ export default {
       },
       today: TODAY,
       activeDate: TODAY,
-    }
+    };
   },
 
   methods: {
@@ -90,14 +104,14 @@ export default {
     },
 
     prevMonth() {
-      this.activeDate = dayjs(this.activeDate).subtract(1, 'month');
+      this.activeDate = dayjs(this.activeDate).subtract(1, "month");
     },
 
     nextMonth() {
-      this.activeDate = dayjs(this.activeDate).add(1, 'month');
+      this.activeDate = dayjs(this.activeDate).add(1, "month");
     },
 
-    monthDaysArray(daysCount, startDay=0, length=daysCount-startDay) {
+    monthDaysArray(daysCount, startDay = 0, length = daysCount - startDay) {
       return monthsList(startDay, daysCount, length);
     },
 
@@ -107,18 +121,25 @@ export default {
 
     getDateObject(selectedDate) {
       return {
-        day: dayjs(selectedDate).format('D'),
-        month: dayjs(selectedDate).format('M'),
-        year: dayjs(selectedDate).format('YYYY')
-      }
+        day: dayjs(selectedDate).format("D"),
+        month: dayjs(selectedDate).format("M"),
+        year: dayjs(selectedDate).format("YYYY"),
+      };
+    },
+
+    getDayFromDate(date) {
+      return dayjs(date).format("D");
     },
 
     getMonthDetails(selectedDate) {
-
       const date = selectedDate;
+      const year = dayjs(date).format("YYYY");
+      const month = dayjs(date).format("MM");
       const daysCount = dayjs(date).daysInMonth();
-      const firstDay = dayjs(date).date(1).format('ddd');
-      const prevMonth = dayjs(date).subtract(1, 'month');
+      const firstDay = dayjs(date)
+        .date(1)
+        .format("ddd");
+      const prevMonth = dayjs(date).subtract(1, "month");
       const dayOfWeek = this.dayOfWeek(firstDay);
       const prevMonthDaysCount = prevMonth.daysInMonth();
 
@@ -127,50 +148,59 @@ export default {
         name: dayjs(date).format("MMMM"),
         shortName: dayjs(date).format("MMM"),
         daysCount: daysCount,
-        daysList: this.monthDaysArray(daysCount),
+        daysList: this.getDatesFromRange(
+          dayjs(`${year}-${month}-1`).toDate(),
+          dayjs(`${year}-${month}-${daysCount}`).toDate()
+        ),
         firstDay: firstDay,
         dayOfWeek: dayOfWeek,
 
         monthBefore: {
           date: this.getDateObject(prevMonth),
           daysCount: prevMonthDaysCount,
-          daysList: this.monthDaysArray(dayOfWeek, prevMonthDaysCount - dayOfWeek, dayOfWeek),
+          daysList: this.monthDaysArray(
+            dayOfWeek,
+            prevMonthDaysCount - dayOfWeek,
+            dayOfWeek
+          ),
         },
 
         monthAfter: {
           daysList: this.monthDaysArray(MAX_FIELDS - daysCount - dayOfWeek),
-        }
-
-      }
+        },
+      };
     },
 
-  getDatesFromRange(startDate, endDate) {
-    let dates = [],
-    currentDate = startDate,
-      addDays = function(days) {
-        var date = new Date(this.valueOf());
-        date.setDate(date.getDate() + days);
-        return date;
-      };
-  while (currentDate <= endDate) {
-    dates.push(dayjs(currentDate).format("YYYY-MM-DD"));
-    currentDate = addDays.call(currentDate, 1);
-  }
-  return dates; 
-  }
+    getDatesFromRange(startDate, endDate) {
+      let dates = [],
+        currentDate = startDate,
+        addDays = function(days) {
+          var date = new Date(this.valueOf());
+          date.setDate(date.getDate() + days);
+          return date;
+        };
+      while (currentDate <= endDate) {
+        dates.push(dayjs(currentDate).format("YYYY-MM-DD"));
+        currentDate = addDays.call(currentDate, 1);
+      }
+      return dates;
+    },
+
+    isFree(day, range) {
+      return range.includes(day);
+    }
 
   },
 
   computed: {
-
     activeMonth: {
       get: function() {
         return this.getMonthDetails(this.activeDate);
       },
 
       set: function(value) {
-        this.today = value
-      }
+        this.today = value;
+      },
     },
 
     weekDays: function() {
@@ -186,8 +216,8 @@ export default {
     },
 
     freeSlotRange: function() {
-      return this.getDatesFromRange(this.freeSlot[0], this.freeSlot[1])
-    }
+      return this.getDatesFromRange(this.freeSlot[0], this.freeSlot[1]);
+    },
   },
 
   created() {
@@ -197,12 +227,15 @@ export default {
   mounted: function() {
     this.$nextTick(function() {
       console.log(
-        this.getDatesFromRange(dayjs(this.today), dayjs(this.today).add(1, 'month') )
-  //     console.log(
-  //       dayjs()
-  //         .startOf("month")
-  //         .set("year", 2021)
-  //         .format("YYYY-MM-DD")
+        this.getDatesFromRange(
+          dayjs(this.today),
+          dayjs(this.today).add(1, "month")
+        )
+        //     console.log(
+        //       dayjs()
+        //         .startOf("month")
+        //         .set("year", 2021)
+        //         .format("YYYY-MM-DD")
       );
     });
   },
@@ -210,10 +243,17 @@ export default {
 </script>
 
 <style lang="scss" scoped>
-$bg-mint: #00dbb1;
+$mint: #00dbb1;
+$light-mint: #c3fef8;
 $arrow-color: #424c4d;
 $arrow-border-width: 3px;
 $arrow-width: 7px;
+
+%display-middle {
+  display: flex;
+  align-items: center;
+  justify-content: center
+}
 
 .callendar {
   font-family: BlinkMacSystemFont, -apple-system, Segoe UI, Roboto, Oxygen,
@@ -222,7 +262,7 @@ $arrow-width: 7px;
 
   .header {
     align-items: center;
-    background: $bg-mint;
+    background: $mint;
     display: flex;
     height: 3.75rem;
     justify-content: space-between;
@@ -251,10 +291,22 @@ $arrow-width: 7px;
     max-width: 14.2857142857%;
     text-transform: capitalize;
     user-select: none;
+    @extend %display-middle;
+
+    span {
+      display: flex;
+      flex: 100%;
+      @extend %display-middle;
+    }
+
+    .free {
+      background-color: $light-mint;
+      color: $mint;
+    }
 
     &--after,
     &--before {
-      opacity: .4;
+      opacity: 0.4;
     }
   }
 }
