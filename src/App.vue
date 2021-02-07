@@ -24,10 +24,10 @@ export default {
   data: function() {
     return {
       datesFree: [
-        [dayjs(), dayjs().add(1, "week")],
-        [dayjs().add(18, "day"), dayjs().add(22, "day")]
+        [dayjs('2021-02-08').toDate(), dayjs('2021-02-16').toDate()],
+        [dayjs('2021-02-21').toDate(), dayjs('2021-02-25').toDate()]
       ],
-      datesBusy: [[dayjs().add(11, "day"), dayjs().add(2, "week")]]
+      datesBusy: [[dayjs('2021-02-17').toDate(), dayjs('2021-02-20').toDate()]]
     };
   }
 };
