@@ -1,17 +1,16 @@
 <template>
-  <div class="callendar">
-    <!-- <h1>{{ msg }}</h1> -->
-
+  <div class="calendar" @blur="hideCalendar" tabindex="0" :ref="id" :id="id">
+    <!-- v-if="isShowCheckIn" -->
     <div class="header">
-      <button class="btn-nav" @click="prevMonth()">
+      <span class="btn-nav btn-nav--prev" type="button" @click="prevMonth()">
         <span class="chevron-arrow-left"></span>
-      </button>
+      </span>
       <div class="month-name">
         {{ activeMonth.name }} {{ activeMonth.date.year }}
       </div>
-      <button class="btn-nav" @click="nextMonth()">
+      <span class="btn-nav btn-nav--next" type="button" @click="nextMonth()">
         <span class="chevron-arrow-right"></span>
-      </button>
+      </span>
     </div>
 
     <div class="weekdays">
@@ -20,23 +19,34 @@
       </div>
     </div>
     <div class="days">
-      <div
+      <span
         v-for="(dayMonthPrev, index) of activeMonth.monthBefore.daysList"
         :key="`${index}-before`"
         class="day day--before"
       >
         {{ dayMonthPrev }}
-      </div>
+      </span>
       <div
         v-for="(day, index) of activeMonth.daysList"
         :key="index"
-        class="day"
+        :class="
+          `day ${
+            (id === 'calendarCheckIn' && dayCheckIn && day === dayCheckIn) ||
+            (id === 'calendarCheckOut' && dayCheckOut && day === dayCheckOut)
+              ? 'active'
+              : ''
+          }
+          ${setClasses(day, datesFreeRange, 'free')}${setClasses(
+            day,
+            datesBusyRange,
+            'busy'
+          )}`
+        "
+        @click="selectDay(day)"
       >
-      <span
-      :class="isFree(day, freeSlotRange)?'free':''"
-      >
-        {{ getDayFromDate(day) }}
-      </span>
+        <span>
+          {{ getDayFromDate(day) }}
+        </span>
       </div>
       <div
         v-for="(day, index) of activeMonth.monthAfter.daysList"
@@ -68,21 +78,35 @@ dayjs.extend(localeData);
 const MAX_FIELDS = 35;
 const TODAY = dayjs().format("YYYY-MM-DD");
 
-console.log(MAX_FIELDS);
-
 export default {
   name: "Calendar",
   props: {
+    id: {
+      type: String,
+      required: true
+    },
     locale: {
       type: String,
-      default: "en",
+      default: "en"
     },
-    currentDate: {
-      type: String,
+    datesBusy: {
+      type: Array
     },
-    freeSlot: {
-      type: Array,
+    datesFree: {
+      type: Array
     },
+    isShowCheckIn: {
+      type: Boolean
+    },
+    isShowCheckOut: {
+      type: Boolean
+    },
+    dayCheckIn: {
+      type: String
+    },
+    dayCheckOut: {
+      type: String
+    }
   },
 
   data: function() {
@@ -90,10 +114,10 @@ export default {
       title: "calendar",
       currentLocale: "en",
       now: {
-        days: dayjs().daysInMonth(),
+        days: dayjs().daysInMonth()
       },
       today: TODAY,
-      activeDate: TODAY,
+      activeDate: TODAY
     };
   },
 
@@ -123,7 +147,7 @@ export default {
       return {
         day: dayjs(selectedDate).format("D"),
         month: dayjs(selectedDate).format("M"),
-        year: dayjs(selectedDate).format("YYYY"),
+        year: dayjs(selectedDate).format("YYYY")
       };
     },
 
@@ -154,7 +178,6 @@ export default {
         ),
         firstDay: firstDay,
         dayOfWeek: dayOfWeek,
-
         monthBefore: {
           date: this.getDateObject(prevMonth),
           daysCount: prevMonthDaysCount,
@@ -162,12 +185,12 @@ export default {
             dayOfWeek,
             prevMonthDaysCount - dayOfWeek,
             dayOfWeek
-          ),
+          )
         },
 
         monthAfter: {
-          daysList: this.monthDaysArray(MAX_FIELDS - daysCount - dayOfWeek),
-        },
+          daysList: this.monthDaysArray(MAX_FIELDS - daysCount - dayOfWeek)
+        }
       };
     },
 
@@ -186,10 +209,64 @@ export default {
       return dates;
     },
 
-    isFree(day, range) {
+    isSelected(day, range) {
       return range.includes(day);
-    }
+    },
 
+    setClasses(day, range, groupName) {
+      let classes = "";
+      range.forEach(array => {
+        const isSelected = this.isSelected(day, array);
+        if (isSelected === true) {
+          classes = `day--${groupName}`;
+          if (array.indexOf(day) === 0) {
+            classes += " first";
+          } else if (array.indexOf(day) === array.length - 1) {
+            classes += " last";
+          }
+        }
+      });
+      return classes;
+    },
+
+    hideCalendar() {
+      if (this.id === "calendarCheckIn") {
+        this.$emit("update:isShowCheckIn", false);
+      } else if (this.id === "calendarCheckOut") {
+        this.$emit("update:isShowCheckOut", false);
+      }
+    },
+
+    selectDay(dayChecked) {
+      if (this.id === "calendarCheckIn") {
+        this.$emit("update:dayCheckIn", dayChecked);
+      } else if (this.id === "calendarCheckOut") {
+        this.$emit("update:dayCheckOut", dayChecked);
+      }
+    }
+  },
+
+  watch: {
+    isShowCheckIn: {
+      immediate: true,
+      handler(newValue) {
+        if (newValue === true) {
+          this.$nextTick(function() {
+            this.$refs[this.id].focus();
+          });
+        }
+      }
+    },
+    isShowCheckOut: {
+      immediate: true,
+      handler(newValue) {
+        if (newValue === true) {
+          this.$nextTick(function() {
+            this.$refs[this.id].focus();
+          });
+        }
+      }
+    }
   },
 
   computed: {
@@ -200,108 +277,303 @@ export default {
 
       set: function(value) {
         this.today = value;
-      },
+      }
     },
 
     weekDays: function() {
       return dayjs.weekdaysShort();
     },
 
-    freeFrom: function() {
-      return dayjs(this.freeSlot[0]).format("YYYY-MM-DD");
+    datesFreeRange: function() {
+      const result = [];
+      const dates = this.datesFree;
+      dates.forEach(array => {
+        result.push(this.getDatesFromRange(array[0], array[1]));
+      });
+      return result;
     },
-
-    freeTo: function() {
-      return dayjs(this.freeSlot[1]).format("YYYY-MM-DD");
-    },
-
-    freeSlotRange: function() {
-      return this.getDatesFromRange(this.freeSlot[0], this.freeSlot[1]);
-    },
+    datesBusyRange: function() {
+      const result = [];
+      const dates = this.datesBusy;
+      dates.forEach(array => {
+        result.push(this.getDatesFromRange(array[0], array[1]));
+      });
+      return result;
+    }
   },
 
   created() {
     this.setLocale();
-  },
-
-  mounted: function() {
-    this.$nextTick(function() {
-      console.log(
-        this.getDatesFromRange(
-          dayjs(this.today),
-          dayjs(this.today).add(1, "month")
-        )
-        //     console.log(
-        //       dayjs()
-        //         .startOf("month")
-        //         .set("year", 2021)
-        //         .format("YYYY-MM-DD")
-      );
-    });
-  },
+  }
 };
 </script>
 
 <style lang="scss" scoped>
 $mint: #00dbb1;
+$red: #e53e3e;
+$red-light: #fed7d7;
 $light-mint: #c3fef8;
 $arrow-color: #424c4d;
-$arrow-border-width: 3px;
-$arrow-width: 7px;
+$text-color: #98a5b6;
+$light-gray: #e1e1e1;
+$calendar-margin-top: 0.625rem;
+$border-color: #dadada;
+
+$arrow-border-width: 0.1875rem;
+$arrow-width: 0.4375rem;
+$max-width: 21.875rem;
+$day-height: 2.5rem;
+$header-height: 3.75rem;
+$day-y-padding: 0.313rem;
+$form-group-height: 2.6875rem;
 
 %display-middle {
-  display: flex;
   align-items: center;
-  justify-content: center
+  display: flex;
+  justify-content: center;
 }
 
-.callendar {
+%radius-corners {
+  &.first {
+    span {
+      border-bottom-left-radius: $day-height / 2;
+      border-top-left-radius: $day-height / 2;
+    }
+  }
+  &.last {
+    span {
+      border-bottom-right-radius: $day-height / 2;
+      border-top-right-radius: $day-height / 2;
+    }
+  }
+
+  &.first {
+    &:before {
+      left: auto;
+      max-width: 50%;
+      right: 0;
+    }
+  }
+  &.last {
+    &:before {
+      left: 0;
+      max-width: 50%;
+      right: auto;
+    }
+  }
+}
+
+.calendar {
   font-family: BlinkMacSystemFont, -apple-system, Segoe UI, Roboto, Oxygen,
     Ubuntu, Cantarell, Fira Sans, Droid Sans, Helvetica Neue, Helvetica, Arial,
     sans-serif;
+  max-width: $max-width;
+  padding-top: $calendar-margin-top;
+  position: absolute;
+  top: $form-group-height;
+  z-index: 2;
+
+  &#calendarCheckIn {
+    left: 0;
+    &:before {
+      left: 1.5625rem;
+    }
+  }
+
+  &#calendarCheckOut {
+    right: 0;
+    &:before {
+      right: 1.5625rem;
+    }
+  }
+
+  &:before {
+    content: "";
+    border-color: $border-color $border-color transparent transparent;
+    border-style: solid;
+    border-width: 1px;
+    height: 0.75rem;
+    position: absolute;
+    top: 0.1875rem;
+    transform: rotate(-45deg);
+    width: 0.75rem;
+    z-index: -1;
+  }
+
+  &:focus {
+    outline: 0;
+    box-shadow: none;
+  }
+
+  .fieldset {
+    max-width: 22.1875rem;
+  }
 
   .header {
     align-items: center;
     background: $mint;
     display: flex;
-    height: 3.75rem;
+    height: $header-height;
     justify-content: space-between;
 
     .month-name {
       color: #fff;
       font-size: 1.3125rem;
       font-weight: 500;
+      user-select: none;
     }
   }
 
   .btn-nav {
     all: initial;
+    align-items: center;
+    display: flex;
+    height: 100%;
+    justify-content: center;
     padding: 0 1rem;
+    position: relative;
+
+    &:before {
+      background: rgba($arrow-color, 0.3);
+      bottom: calc(50% - #{$arrow-width} * 1.3);
+      content: "";
+      height: 0.125rem;
+      position: absolute;
+      top: auto;
+      transform: translateY(-50%);
+      width: $arrow-width * 1.3;
+    }
+
+    &:hover {
+      cursor: pointer;
+    }
+
+    &--prev:before {
+      left: auto;
+      right: calc(50% - 0.125rem);
+    }
+
+    &--next:before {
+      left: calc(50% - 0.125rem);
+      right: auto;
+    }
   }
 
   .weekdays,
   .days {
+    background: #fff;
+    border-width: 0 1px 1px 1px;
+    border: 1px solid $light-gray;
     display: flex;
     flex-wrap: wrap;
+    font-size: 0.875rem;
+    padding-left: 0.875rem;
+    padding-right: 0.875rem;
+
+    & > .day {
+      &--free {
+        &:before {
+          background-color: $light-mint;
+          bottom: $day-y-padding;
+          content: "";
+          left: 0;
+          position: absolute;
+          top: $day-y-padding;
+          width: 100%;
+          z-index: 0;
+        }
+
+        span {
+          color: $mint;
+        }
+        &.first,
+        &.last {
+          span {
+            color: #fff;
+            z-index: 2;
+            &:before {
+              background: $mint;
+              border-radius: 50%;
+              bottom: 0;
+              content: "";
+              left: 0;
+              position: absolute;
+              right: 0;
+              top: 0;
+              z-index: -1;
+            }
+          }
+        }
+        @extend %radius-corners;
+      }
+
+      &--busy {
+        pointer-events: none;
+        &:before {
+          background: $red-light;
+          bottom: $day-y-padding;
+          content: "";
+          left: 0;
+          position: absolute;
+          top: $day-y-padding;
+          width: 100%;
+          z-index: 0;
+        }
+
+        &.first,
+        &.last {
+          span {
+            color: #fff;
+            z-index: 2;
+            &:before {
+              background: $red;
+              border-radius: 50%;
+              bottom: 0;
+              content: "";
+              left: 0;
+              position: absolute;
+              right: 0;
+              top: 0;
+              z-index: -1;
+            }
+          }
+        }
+        @extend %radius-corners;
+      }
+    }
   }
 
   .day {
-    // padding: 0.5rem;
+    @extend %display-middle;
+    color: $text-color;
     flex: 14.2857142857%;
+    font-weight: 500;
+    height: $day-height;
     max-width: 14.2857142857%;
+    padding: $day-y-padding 0;
+    position: relative;
     text-transform: capitalize;
     user-select: none;
-    @extend %display-middle;
 
-    span {
-      display: flex;
-      flex: 100%;
-      @extend %display-middle;
+    &.active {
+      &:after {
+        border-radius: 50%;
+        border: 2px solid $mint;
+        content: "";
+        height: $day-height;
+        position: absolute;
+        width: $day-height;
+        z-index: 3;
+      }
     }
 
-    .free {
-      background-color: $light-mint;
-      color: $mint;
+    span {
+      @extend %display-middle;
+      display: flex;
+      flex: 100%;
+      height: 100%;
+      max-width: $day-height;
+      position: relative;
     }
 
     &--after,
@@ -312,7 +584,7 @@ $arrow-width: 7px;
 }
 
 %arrow {
-  display: inline-block;
+  display: flex;
   height: $arrow-width;
   user-select: none;
   width: $arrow-width;

@@ -1,12 +1,12 @@
 <template>
   <div id="app">
-    <h1>Formularz rezerwacji pobytu</h1>
+    <h1>Stay booking form</h1>
     <BookingStay
+      :dates-busy="datesBusy"
+      :dates-free="datesFree"
       :price="298"
       currency="PLN"
       locale="pl"
-      :free-slot="freeSlot"
-      occupied=''
     />
   </div>
 </template>
@@ -20,21 +20,33 @@ export default {
   components: {
     BookingStay
   },
-  
+
   data: function() {
     return {
-      freeSlot: [dayjs(), dayjs().add(1, 'week')],
+      datesFree: [
+        [dayjs(), dayjs().add(1, "week")],
+        [dayjs().add(18, "day"), dayjs().add(22, "day")]
+      ],
+      datesBusy: [[dayjs().add(11, "day"), dayjs().add(2, "week")]]
     };
   }
 };
 </script>
 
 <style lang="scss">
+$light-grey: #ececec;
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
 #app {
+  background: $light-grey;
   font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  color: #2c3e50;
-  margin-top: 60px;
+  max-width: 27.5rem;
+  min-height: calc(100vh - 2rem);
+  padding: 1rem;
 }
 </style>

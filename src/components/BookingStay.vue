@@ -6,24 +6,47 @@
     <form class="booking-form">
       <fieldset class="fieldset">
         <legend>Dates</legend>
-        <div class="form-group">
+        <div class="form-group" @blur="hideCalendar">
           <input
+            @focus="focusCheckIn"
             class="date-input"
+            :class="isShowCheckIn === true ? 'active' : ''"
             type="text"
             name="check_in"
             placeholder="Check In"
+            v-model="dayCheckIn"
+          />
+          <calendar
+            v-if="isShowCheckIn"
+            :is-show-check-in.sync="isShowCheckIn"
+            locale="en"
+            :dates-busy="datesBusy"
+            :dates-free="datesFree"
+            :day-check-in.sync="dayCheckIn"
+            id="calendarCheckIn"
           />
           <Arrow />
           <input
+            @focus="focusCheckOut"
+            :class="isShowCheckOut === true ? 'active' : ''"
             class="date-input"
             type="text"
             name="check_out"
             placeholder="Check Out"
+            v-model="dayCheckOut"
+          />
+          <calendar
+            v-if="isShowCheckOut"
+            :is-show-check-out.sync="isShowCheckOut"
+            locale="en"
+            :dates-busy="datesBusy"
+            :dates-free="datesFree"
+            :day-check-out.sync="dayCheckOut"
+            id="calendarCheckOut"
           />
         </div>
       </fieldset>
     </form>
-    <calendar locale="en" :free-slot="freeSlot" />
   </div>
 </template>
 
@@ -37,32 +60,65 @@ export default {
   components: {
     Calendar,
     Rating,
-    Arrow,
+    Arrow
   },
   props: {
-    price: Number,
-    currency: String,
+    price: {
+      type: Number,
+      required: true
+    },
+    currency: {
+      type: String,
+      required: true
+    },
     locale: {
       String,
-      default: "en",
+      default: "en"
     },
-    freeSlot: Array,
+    datesBusy: Array,
+    datesFree: Array
   },
 
   data: function() {
     return {
       title: "calendar",
+      isShowCheckIn: false,
+      isShowCheckOut: false,
+      dayCheckIn: "",
+      dayCheckOut: ""
     };
+  },
+
+  computed: {
+    showCheckInCalendar: function() {
+      return this.isShowCheckIn;
+    },
+    showCheckOutCalendar: function() {
+      return this.isShowCheckOut;
+    }
   },
 
   methods: {
     priceFormat: function() {
       return new Intl.NumberFormat(this.locale, {
-        style: "currency",
         currency: this.currency,
+        style: "currency"
       }).format(this.price);
     },
-  },
+
+    focusCheckIn: function() {
+      this.isShowCheckIn = true;
+    },
+
+    focusCheckOut: function() {
+      this.isShowCheckOut = true;
+    },
+
+    hideCalendar() {
+      this.isShowCheckIn = false;
+      this.isShowCheckOut = false;
+    }
+  }
 };
 </script>
 
@@ -71,6 +127,8 @@ $dark-grey: #5a5a5a;
 $border-color: #dadada;
 $text-focus: #377375;
 $bg-light: #a1d9d6;
+
+$form-group-height: 2.6875rem;
 
 .booking-box {
   border: 1px solid $border-color;
@@ -95,35 +153,38 @@ hr {
 
   .fieldset {
     all: inherit;
+    position: relative;
 
     legend {
       color: $dark-grey;
       font-size: 0.8125rem;
       padding: 0 0 0.625rem;
     }
-
   }
 
   .form-group {
-    
-    display: flex;
-    border: 1px solid $border-color;
     align-items: center;
+    border: 1px solid $border-color;
+    display: flex;
+    max-height: $form-group-height;
     padding: 0.625rem;
   }
 
   .date-input {
-    border: none;
+    background: transparent;
     border-radius: 0.1875rem;
+    border: none;
     font-size: 0.9375rem;
-    padding: 0.125rem 0.3125rem;
     max-width: 9.125rem;
+    padding: 0.125rem 0.3125rem;
 
     &::placeholder {
       color: $text-focus;
     }
 
-    &:focus {
+    &:focus,
+    &:active,
+    &.active {
       background-color: $bg-light;
       box-shadow: none;
       color: $text-focus;
