@@ -61,16 +61,14 @@
 <script>
 import dayjs from "dayjs";
 const localeData = require("dayjs/plugin/localeData");
-
 const monthsList = (start, end, length = end - start) =>
   Array.from({ length }, (_, i) => start + i + 1);
+const MAX_FIELDS = 35;
+const TODAY = dayjs().format("YYYY-MM-DD");
 
 require("dayjs/locale/pl");
 require("dayjs/locale/en");
 dayjs.extend(localeData);
-
-const MAX_FIELDS = 35;
-const TODAY = dayjs().format("YYYY-MM-DD");
 
 export default {
   name: "Calendar",
@@ -251,6 +249,7 @@ export default {
         }
       }
     },
+
     isShowCheckOut: {
       immediate: true,
       handler(newValue) {
@@ -286,6 +285,7 @@ export default {
       });
       return result;
     },
+
     datesBusyRange: function() {
       const result = [];
       const dates = this.datesBusy;
