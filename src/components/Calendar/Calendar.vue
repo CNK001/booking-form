@@ -1,6 +1,5 @@
 <template>
   <div class="calendar" @blur="hideCalendar" tabindex="0" :ref="id" :id="id">
-    <!-- v-if="isShowCheckIn" -->
     <div class="header">
       <span class="btn-nav btn-nav--prev" type="button" @click="prevMonth()">
         <span class="chevron-arrow-left"></span>
@@ -62,18 +61,13 @@
 <script>
 import dayjs from "dayjs";
 const localeData = require("dayjs/plugin/localeData");
-// const isBetween = require("dayjs/plugin/isBetween");
-// const updateLocale = require('dayjs/plugin/updateLocale')
 
 const monthsList = (start, end, length = end - start) =>
   Array.from({ length }, (_, i) => start + i + 1);
 
 require("dayjs/locale/pl");
 require("dayjs/locale/en");
-// var localizedFormat = require('dayjs/plugin/localizedFormat');
 dayjs.extend(localeData);
-// dayjs.extend(updateLocale);
-// dayjs.extend(localizedFormat)
 
 const MAX_FIELDS = 35;
 const TODAY = dayjs().format("YYYY-MM-DD");
