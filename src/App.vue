@@ -12,7 +12,7 @@
 </template>
 
 <script>
-import BookingStay from "./components/BookingStay.vue";
+import BookingStay from "./components/Form/BookingStay.vue";
 import dayjs from "dayjs";
 
 export default {

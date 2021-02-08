@@ -51,9 +51,9 @@
 </template>
 
 <script>
-import Calendar from "./Calendar.vue";
-import Rating from "./Rating.vue";
-import Arrow from "./Arrow.vue";
+import Calendar from "@/components/Calendar/Calendar.vue";
+import Rating from "@/components/Rating/Rating.vue";
+import Arrow from "@/components/Form/Arrow.vue";
 
 export default {
   name: "BookingStay",
